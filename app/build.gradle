@@ -2,6 +2,7 @@ plugins {
     id 'kotlin-kapt'
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -90,9 +91,18 @@ dependencies {
 
     // Room
     implementation "androidx.room:room-runtime:2.6.1"
+    implementation 'androidx.navigation:navigation-compose:2.8.3'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
     annotationProcessor "androidx.room:room-compiler:2.6.1"
     kapt "androidx.room:room-compiler:2.6.1"
     implementation "androidx.room:room-ktx:2.6.1"
+
+    //Firebase
+    implementation platform('com.google.firebase:firebase-bom:33.4.0')
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-auth' // Certifique-se de usar a versão mais recente
+    implementation 'com.google.android.gms:play-services-auth:21.2.0'
+    implementation("androidx.credentials:credentials:1.3.0")
 
     // Material UI
     implementation("androidx.compose.material3:material3:1.3.0")

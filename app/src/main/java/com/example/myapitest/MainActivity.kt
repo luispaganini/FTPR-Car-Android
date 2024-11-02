@@ -1,39 +1,35 @@
 package com.example.myapitest
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import com.example.myapitest.databinding.ActivityMainBinding
-import com.example.myapitest.ui.LoginScreen
+import androidx.compose.runtime.Composable
+import androidx.navigation.compose.rememberNavController
+import com.example.myapitest.navigation.SetupNavGraph
+import com.example.myapitest.ui.screens.LoginScreen
+import com.example.myapitest.ui.viewmodel.LoginViewModel
+import com.google.firebase.FirebaseApp
 
 class MainActivity : AppCompatActivity() {
 
 //    private lateinit var binding: ActivityMainBinding
 
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FirebaseApp.initializeApp(this)
+
 //        binding = ActivityMainBinding.inflate(layoutInflater)
 //        setContentView(binding.root)
 
         setContent {
-            LoginScreen()
+            MyApp()
         }
         requestLocationPermission()
         setupView()
 
-        // 1- Criar tela de Login com algum provedor do Firebase (Telefone, Google)
-        //      Cadastrar o Seguinte celular para login de test: +5511912345678
-        //      Código de verificação: 101010
-
-        // 2- Criar Opção de Logout no aplicativo
-
-        // 3- Integrar API REST /car no aplicativo
-        //      API será disponibilida no Github
-        //      JSON Necessário para salvar e exibir no aplicativo
-        //      O Image Url deve ser uma foto armazenada no Firebase Storage
-        //      { "id": "001", "imageUrl":"https://image", "year":"2020/2020", "name":"Gaspar", "licence":"ABC-1234", "place": {"lat": 0, "long": 0} }
-
-        // Opcionalmente trabalhar com o Google Maps ara enviar o place
     }
 
     override fun onResume() {
@@ -51,5 +47,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun fetchItems() {
         // TODO
+    }
+
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @Composable
+    fun MyApp() {
+        val navController = rememberNavController()
+        val loginViewModel = LoginViewModel()
+
+        val startDestination = if (loginViewModel.checkUserAuthentication()) {
+            "home"
+        } else {
+            "login"
+        }
+
+        SetupNavGraph(navController = navController, startDestination = startDestination)
     }
 }
