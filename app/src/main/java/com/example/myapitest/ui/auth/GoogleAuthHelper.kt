@@ -1,6 +1,5 @@
-package com.example.myapitest.auth
+package com.example.myapitest.ui.auth
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.util.Log

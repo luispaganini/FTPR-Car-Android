@@ -8,12 +8,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.myapitest.ui.screens.HomeScreen
 import com.example.myapitest.ui.screens.LoginScreen
+import com.example.myapitest.ui.viewModel.CarsListViewModel
 
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
 fun SetupNavGraph(navController: NavHostController, startDestination: String) {
     NavHost(navController = navController, startDestination = startDestination) {
         composable("login") { LoginScreen(navController) }
-        composable("home") { HomeScreen(navController) }
+        composable("home") {
+            val viewModel = CarsListViewModel()
+            HomeScreen(navController, viewModel)
+        }
     }
 }

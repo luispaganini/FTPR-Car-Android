@@ -16,7 +16,6 @@ import kotlinx.coroutines.launch
 
 class LoginViewModel(
     private val authRepository: AuthRepository = AuthRepository(),
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) : ViewModel() {
 
     var isOtpValid by mutableStateOf<Boolean?>(null)

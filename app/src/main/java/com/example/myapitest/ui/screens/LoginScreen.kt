@@ -3,11 +3,11 @@ package com.example.myapitest.ui.screens
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -23,7 +23,7 @@ import androidx.navigation.NavController
 import com.example.myapitest.R
 import com.example.myapitest.ui.components.AuthButton
 import com.example.myapitest.ui.viewmodel.LoginViewModel
-import com.example.myapitest.auth.GoogleAuthHelper
+import com.example.myapitest.ui.auth.GoogleAuthHelper
 
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
@@ -49,8 +49,10 @@ fun LoginScreen(
     }
 
     Scaffold(
+        containerColor = Color.White,
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(16.dp),
         content = { paddingValues ->
             Column(
