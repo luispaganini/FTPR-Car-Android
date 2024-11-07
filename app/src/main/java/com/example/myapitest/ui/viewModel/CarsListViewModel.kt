@@ -14,7 +14,7 @@ class CarsListViewModel(
 ) : ViewModel() {
     private val _cars = MutableStateFlow<List<Car>>(emptyList())
     val cars: StateFlow<List<Car>> = _cars
-
+    val isLoading = MutableStateFlow(true)
     init {
         fetchCars()
     }
@@ -24,6 +24,7 @@ class CarsListViewModel(
             carRepository.getCars()?.let {
                 _cars.value = it
             }
+            isLoading.value = false
         }
     }
 }

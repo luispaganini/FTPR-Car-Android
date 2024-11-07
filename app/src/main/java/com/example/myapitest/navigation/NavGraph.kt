@@ -1,5 +1,6 @@
 package com.example.myapitest.navigation
 
+import AddCarScreen
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
@@ -15,9 +16,8 @@ import com.example.myapitest.ui.viewModel.CarsListViewModel
 fun SetupNavGraph(navController: NavHostController, startDestination: String) {
     NavHost(navController = navController, startDestination = startDestination) {
         composable("login") { LoginScreen(navController) }
-        composable("home") {
-            val viewModel = CarsListViewModel()
-            HomeScreen(navController, viewModel)
-        }
+        composable("home") { HomeScreen(navController, CarsListViewModel()) }
+        composable("carDetails/{carId}") {}
+        composable("addCar") { AddCarScreen(navController)}
     }
 }
