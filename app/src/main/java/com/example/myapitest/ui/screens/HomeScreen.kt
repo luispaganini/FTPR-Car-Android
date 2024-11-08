@@ -114,10 +114,7 @@ fun CarList(cars: List<Car>, modifier: Modifier = Modifier, navController: NavCo
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
                     .clickable {
-                        Toast
-                            .makeText(navController.context, "Clicou", Toast.LENGTH_SHORT)
-                            .show()
-                        // navController.navigate("carDetails/${car.id}")
+                         navController.navigate("carDetails/${car.id}")
                     },
                 shape = MaterialTheme.shapes.medium,
                 color = Color.White,

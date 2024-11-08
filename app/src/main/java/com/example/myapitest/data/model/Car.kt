@@ -11,5 +11,5 @@ data class Car (
 
 data class Place (
     val lat: Double,
-    val lng: Double,
+    val long: Double,
 )

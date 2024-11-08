@@ -1,3 +1,5 @@
+package com.example.myapitest.ui.viewModel
+
 import android.annotation.SuppressLint
 import android.location.Location
 import android.net.Uri
@@ -12,10 +14,9 @@ import com.example.myapitest.data.repository.CarRepository
 import com.google.android.gms.location.FusedLocationProviderClient
 import kotlinx.coroutines.launch
 
-class AddCarViewModel(
+class DetailsCarViewModel(
     private val repository: CarRepository = CarRepository(apiService = RetrofitClient.apiService),
-): ViewModel() {
-
+) : ViewModel() {
     private val _car = MutableLiveData(Car("", "", "", "", "", Place(0.0, 0.0)))
     val car: LiveData<Car> get() = _car
 
@@ -28,19 +29,6 @@ class AddCarViewModel(
     private val _currentLocation = MutableLiveData<Place>()
     val currentLocation: LiveData<Place> get() = _currentLocation
 
-    fun addCar(car: Car) {
-        _isLoading.value = true
-
-        viewModelScope.launch {
-            repository.addCar(car)
-        }
-        _isLoading.value = false
-    }
-
-    fun onImageSelected(uri: Uri) {
-        _selectedImageUri.value = uri
-    }
-
     @SuppressLint("MissingPermission")
     fun fetchCurrentLocation(fusedLocationClient: FusedLocationProviderClient) {
         fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
@@ -48,6 +36,41 @@ class AddCarViewModel(
                 _currentLocation.postValue(Place(it.latitude, it.longitude))
             }
         }
+    }
+
+    suspend fun fetchCarById(id: String) {
+        _isLoading.value = true
+
+        viewModelScope.launch {
+            val car = repository.getCarById(id)
+            _car.value = car
+            if (car != null && car.imageUrl.isNotEmpty()) {
+                _selectedImageUri.value = Uri.parse(car.imageUrl)
+            }
+             _isLoading.value = false
+        }
+
+    }
+
+    fun editCar(car: Car) {
+        _isLoading.value = true
+
+        viewModelScope.launch {
+            repository.editCar(car)
+        }
+        _isLoading.value = false
+    }
+
+    fun deleteCar(id: String) {
+        _isLoading.value = true
+        viewModelScope.launch {
+            repository.deleteCar(id)
+        }
+        _isLoading.value = false
+    }
+
+    fun onImageSelected(uri: Uri) {
+        _selectedImageUri.value = uri
     }
 
     fun updateCarName(name: String) {

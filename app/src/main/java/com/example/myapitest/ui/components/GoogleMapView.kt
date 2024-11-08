@@ -3,6 +3,7 @@ package com.example.myapitest.ui.components
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,17 +19,25 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 
 @Composable
-fun GoogleMapView(latitude: Double, longitude: Double, onMarkerPositionChanged: (LatLng) -> Unit) {
+fun GoogleMapView(
+    latitude: Double,
+    longitude: Double,
+    onMarkerPositionChanged: (LatLng) -> Unit,
+    editableMap: Boolean
+) {
     var markerPosition by remember { mutableStateOf(LatLng(latitude, longitude)) }
     onMarkerPositionChanged(markerPosition)
 
     GoogleMap(
         modifier = Modifier
+            .padding(top = 16.dp)
             .fillMaxWidth()
             .height(200.dp),
         onMapClick = {
-            markerPosition = it
-            onMarkerPositionChanged(it)
+            if (editableMap) {
+                markerPosition = it
+                onMarkerPositionChanged(it)
+            }
         },
         cameraPositionState = rememberCameraPositionState {
             position = CameraPosition.fromLatLngZoom(LatLng(latitude, longitude), 14f)

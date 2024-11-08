@@ -10,4 +10,9 @@
     <string name="license_car">Placa do Carro</string>
     <string name="get_location_message">Precisamos da permissão de localização para mostrar sua posição no mapa.</string>
     <string name="permission_denied">A permissão foi negada permanentemente. Por favor, habilite nas configurações do app.</string>
+    <string name="make_login">Faça login</string>
+    <string name="car">Carro</string>
+    <string name="back">Voltar</string>
+    <string name="delete_car">Deletar Carro</string>
+    <string name="save">Salvar</string>
 </resources>

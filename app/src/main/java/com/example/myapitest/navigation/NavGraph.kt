@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.myapitest.ui.screens.DetailsCarScreen
 import com.example.myapitest.ui.screens.HomeScreen
 import com.example.myapitest.ui.screens.LoginScreen
 import com.example.myapitest.ui.viewModel.CarsListViewModel
@@ -17,7 +18,12 @@ fun SetupNavGraph(navController: NavHostController, startDestination: String) {
     NavHost(navController = navController, startDestination = startDestination) {
         composable("login") { LoginScreen(navController) }
         composable("home") { HomeScreen(navController, CarsListViewModel()) }
-        composable("carDetails/{carId}") {}
+        composable("carDetails/{carId}") { backStackEntry ->
+            val carId = backStackEntry.arguments?.getString("carId")
+            if (carId != null) {
+                DetailsCarScreen(navController = navController, carId = carId)
+            }
+        }
         composable("addCar") { AddCarScreen(navController)}
     }
 }
