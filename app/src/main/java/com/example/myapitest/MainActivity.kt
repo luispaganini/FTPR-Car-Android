@@ -8,8 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.rememberNavController
 import com.example.myapitest.navigation.SetupNavGraph
-import com.example.myapitest.ui.screens.LoginScreen
-import com.example.myapitest.ui.viewmodel.LoginViewModel
+import com.example.myapitest.ui.viewModel.LoginViewModel
 import com.google.firebase.FirebaseApp
 
 class MainActivity : AppCompatActivity() {

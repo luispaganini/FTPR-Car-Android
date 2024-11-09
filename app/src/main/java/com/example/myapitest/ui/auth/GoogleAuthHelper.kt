@@ -7,7 +7,7 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.navigation.NavController
 import com.example.myapitest.R
-import com.example.myapitest.ui.viewmodel.LoginViewModel
+import com.example.myapitest.ui.viewModel.LoginViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException

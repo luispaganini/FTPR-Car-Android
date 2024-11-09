@@ -1,5 +1,6 @@
 package com.example.myapitest.ui.screens
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -7,7 +8,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -23,8 +23,19 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapitest.R
 import com.example.myapitest.ui.components.AuthButton
-import com.example.myapitest.ui.viewmodel.LoginViewModel
+import com.example.myapitest.ui.viewModel.LoginViewModel
 import com.example.myapitest.ui.auth.GoogleAuthHelper
+import com.example.myapitest.ui.viewModel.AuthState
+import com.example.myapitest.utils.PhoneNumber
+import kotlinx.coroutines.launch
+
+data class LoginScreenState(
+    var phoneNumber: String = "",
+    var otpCode: String = "",
+    var isOtpRequested: Boolean = false,
+    var isOtpSended: Boolean = false,
+    var isLoading: Boolean = false,
+)
 
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
@@ -32,10 +43,19 @@ fun LoginScreen(
     navController: NavController,
     viewModel: LoginViewModel = LoginViewModel()
 ) {
-    var phoneNumber by remember { mutableStateOf("") }
-    var otpCode by remember { mutableStateOf("") }
-    var isOtpRequested by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val state = remember { mutableStateOf(LoginScreenState()) }
+    val stateViewModel by viewModel.state.collectAsState(AuthState())
+
+
+    LaunchedEffect(stateViewModel.errorMessage) {
+        if (viewModel.checkUserAuthentication()) {
+            navController.navigate("home") {
+                popUpTo("login") { inclusive = true }
+            }
+        }
+    }
 
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -43,17 +63,10 @@ fun LoginScreen(
         GoogleAuthHelper.handleGoogleSignInResult(result, viewModel, context, navController)
     }
 
-    if (viewModel.isOtpValid == true) {
-        navController.navigate("home") {
-            popUpTo("login") { inclusive = true }
-        }
-    }
-
     Scaffold(
         containerColor = Color.White,
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
             .padding(16.dp),
         content = { paddingValues ->
             Column(
@@ -63,114 +76,142 @@ fun LoginScreen(
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = stringResource(R.string.make_login), fontSize = 24.sp, color = Color.Black)
+                Text(
+                    text = stringResource(R.string.make_login),
+                    fontSize = 24.sp,
+                    color = Color.Black
+                )
                 Spacer(modifier = Modifier.height(24.dp))
 
-                if (!isOtpRequested) {
-                    PhoneNumberInput(phoneNumber) { phoneNumber = it }
+                if (!state.value.isOtpRequested) {
+                    InputField(
+                        value = state.value.phoneNumber,
+                        label = stringResource(R.string.number_phone),
+                        keyboardType = KeyboardType.Phone,
+                        onValueChange = { state.value = state.value.copy(phoneNumber = it) },
+                        isError = stateViewModel.errorMessage != null
+                    )
+                    if (state.value.isOtpSended)
+                        VerificationMessage(!state.value.isOtpSended)
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    SendOtpButton(phoneNumber) {
-                        isOtpRequested = true
-                        viewModel.requestOtp(phoneNumber)
+                    Button(
+                        enabled =
+                        PhoneNumber.formatPhoneNumber(state.value.phoneNumber)
+                            .matches(Regex("^\\+[1-9]\\d{1,14}\$")),
+                        onClick = {
+                            state.value = state.value.copy(isLoading = true)
+                            scope.launch {
+                                viewModel.requestOtp(
+                                    PhoneNumber.formatPhoneNumber(state.value.phoneNumber),
+                                    context as Activity
+                                )
+                                state.value =
+                                    state.value.copy(isOtpRequested = true, isLoading = false)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = stringResource(R.string.send_otp_code))
                     }
                 } else {
-                    OtpInput(otpCode) { otpCode = it }
+                    InputField(
+                        value = state.value.otpCode,
+                        label = stringResource(R.string.otp_code),
+                        keyboardType = KeyboardType.Number,
+                        onValueChange = { state.value = state.value.copy(otpCode = it) },
+                        isError = state.value.otpCode.length != 6 && state.value.isOtpSended
+                    )
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    VerifyOtpButton(viewModel, otpCode)
-                    VerificationMessage(viewModel)
+                    Button(
+                        enabled = state.value.otpCode.isNotBlank(),
+                        onClick = {
+                            scope.launch {
+                                val result = viewModel.verifyOtp(state.value.otpCode)
+                                state.value = state.value.copy(isOtpSended = true)
+                                if (result) {
+                                    navController.navigate("home") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                } else {
+                                    state.value = state.value.copy(isOtpRequested = false)
+                                    state.value = state.value.copy(otpCode = "")
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = stringResource(R.string.verify_code))
+                    }
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
-                AuthButtonSection(viewModel, context, googleSignInLauncher)
+                AuthButtonSection(context, googleSignInLauncher)
             }
         }
     )
 }
 
 @Composable
-fun PhoneNumberInput(value: String, onValueChange: (String) -> Unit) {
+fun InputField(
+    value: String,
+    label: String,
+    keyboardType: KeyboardType,
+    onValueChange: (String) -> Unit,
+    isError: Boolean
+) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text("Número de Telefone") },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-        modifier = Modifier.fillMaxWidth()
+        label = { Text(label) },
+        isError = isError,
+
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 
 @Composable
-fun SendOtpButton(phoneNumber: String, onClick: () -> Unit) {
-    Button(
-        onClick = {
-            if (phoneNumber.isNotBlank()) onClick()
-        },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(text = "Enviar Código OTP")
-    }
-}
-
-@Composable
-fun OtpInput(value: String, onValueChange: (String) -> Unit) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text("Digite o Código OTP") },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier.fillMaxWidth()
-    )
-}
-
-@Composable
-fun VerifyOtpButton(viewModel: LoginViewModel, otpCode: String) {
-    Button(
-        onClick = { viewModel.verifyOtp("", otpCode) },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(text = "Verificar Código")
-    }
-}
-
-@Composable
-fun VerificationMessage(viewModel: LoginViewModel) {
-    if (viewModel.isOtpValid == true) {
-        Text(
-            text = "Código verificado com sucesso!",
+fun VerificationMessage(isOtpValid: Boolean?) {
+    when (isOtpValid) {
+        true -> Text(
+            text = stringResource(R.string.verified_successfull),
             color = Color.Green,
             modifier = Modifier.padding(top = 8.dp)
         )
-    } else if (viewModel.isOtpValid == false) {
-        Text(
-            text = "Código OTP inválido.",
+
+        false ->
+            Text(
+            text = stringResource(R.string.invalid_otp),
             color = Color.Red,
             modifier = Modifier.padding(top = 8.dp)
         )
+
+        else -> {}
     }
 }
 
 @Composable
 fun AuthButtonSection(
-    viewModel: LoginViewModel,
     context: Context,
-    googleSignInLauncher: ActivityResultLauncher<Intent>
+    googleSignInLauncher: ActivityResultLauncher<Intent>,
 ) {
-    AuthButton(
-        onClick = { viewModel.onGitHubLogin() },
-        text = "Login com GitHub",
-        iconResId = R.drawable.ic_github,
-        backgroundColor = Color.Black,
-        textColor = Color.White
-    )
-
+    //Tava em teste, mas tomei 404 do github
+    //    AuthButton(
+    //        onClick = { GitHubAuthHelper.initiateGitHubLogin(context, navController)},
+    //        text = stringResource(R.string.login_github),
+    //        iconResId = R.drawable.ic_github,
+    //        backgroundColor = Color.Black,
+    //        textColor = Color.White
+    //    )
     Spacer(modifier = Modifier.height(12.dp))
-
     AuthButton(
         onClick = { GoogleAuthHelper.initiateGoogleLogin(context, googleSignInLauncher) },
-        text = "Login com Google",
+        text = stringResource(R.string.login_google),
         iconResId = R.drawable.ic_google,
         textColor = Color.Black,
         backgroundColor = Color.White
     )
-
     Spacer(modifier = Modifier.height(24.dp))
 }

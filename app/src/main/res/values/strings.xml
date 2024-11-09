@@ -15,4 +15,12 @@
     <string name="back">Voltar</string>
     <string name="delete_car">Deletar Carro</string>
     <string name="save">Salvar</string>
+    <string name="number_phone">Número de Telefone</string>
+    <string name="send_otp_code">Enviar Código OTP</string>
+    <string name="otp_code">Digite o Código OTP</string>
+    <string name="invalid_otp">Código OTP inválido.</string>
+    <string name="verified_successfull">Código verificado com sucesso!</string>
+    <string name="login_github">Login com GitHub</string>
+    <string name="login_google">Login com Google</string>
+    <string name="verify_code">Verificar Código</string>
 </resources>
