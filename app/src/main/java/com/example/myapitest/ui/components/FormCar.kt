@@ -65,14 +65,21 @@ fun FormCar(
             })
 
         currentLocation?.let {
+            val (latitude, longitude) = if (car.place.lat != 0.0 && car.place.long != 0.0) {
+                car.place.lat to car.place.long
+            } else {
+                it.lat to it.long
+            }
+
             GoogleMapView(
-                it.lat,
-                it.long,
+                latitude,
+                longitude,
                 onMarkerPositionChanged = { place ->
                     onLocationChange(Place(place.latitude, place.longitude))
                 },
                 editableMap
             )
         }
+
     }
 }
