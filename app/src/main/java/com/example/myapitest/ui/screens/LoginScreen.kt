@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,8 +41,7 @@ data class LoginScreenState(
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
 fun LoginScreen(
-    navController: NavController,
-    viewModel: LoginViewModel = LoginViewModel()
+    navController: NavController, viewModel: LoginViewModel = LoginViewModel()
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -63,8 +63,7 @@ fun LoginScreen(
         GoogleAuthHelper.handleGoogleSignInResult(result, viewModel, context, navController)
     }
 
-    Scaffold(
-        containerColor = Color.White,
+    Scaffold(containerColor = Color.White,
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
@@ -91,26 +90,32 @@ fun LoginScreen(
                         onValueChange = { state.value = state.value.copy(phoneNumber = it) },
                         isError = stateViewModel.errorMessage != null
                     )
-                    if (state.value.isOtpSended)
-                        VerificationMessage(!state.value.isOtpSended)
+                    if (state.value.isOtpSended) VerificationMessage(!state.value.isOtpSended)
 
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
-                        enabled =
-                        PhoneNumber.formatPhoneNumber(state.value.phoneNumber)
+                        enabled = PhoneNumber.formatPhoneNumber(state.value.phoneNumber)
                             .matches(Regex("^\\+[1-9]\\d{1,14}\$")),
                         onClick = {
                             state.value = state.value.copy(isLoading = true)
                             scope.launch {
-                                viewModel.requestOtp(
+                                val isValidPhone = viewModel.requestOtp(
                                     PhoneNumber.formatPhoneNumber(state.value.phoneNumber),
                                     context as Activity
                                 )
-                                state.value =
-                                    state.value.copy(isOtpRequested = true, isLoading = false)
+
+                                if (isValidPhone) {
+                                    state.value = state.value.copy(isOtpRequested = true, isLoading = false)
+                                } else {
+                                    state.value = state.value.copy(isLoading = false)
+                                    Toast.makeText(
+                                        context,
+                                        "Telefone inválido. Tente novamente",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth()
+                        }, modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(text = stringResource(R.string.send_otp_code))
                     }
@@ -125,8 +130,7 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
-                        enabled = state.value.otpCode.isNotBlank(),
-                        onClick = {
+                        enabled = state.value.otpCode.isNotBlank(), onClick = {
                             scope.launch {
                                 val result = viewModel.verifyOtp(state.value.otpCode)
                                 state.value = state.value.copy(isOtpSended = true)
@@ -139,8 +143,7 @@ fun LoginScreen(
                                     state.value = state.value.copy(otpCode = "")
                                 }
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth()
+                        }, modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(text = stringResource(R.string.verify_code))
                     }
@@ -149,8 +152,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.weight(1f))
                 AuthButtonSection(context, googleSignInLauncher)
             }
-        }
-    )
+        })
 }
 
 @Composable
@@ -181,8 +183,7 @@ fun VerificationMessage(isOtpValid: Boolean?) {
             modifier = Modifier.padding(top = 8.dp)
         )
 
-        false ->
-            Text(
+        false -> Text(
             text = stringResource(R.string.invalid_otp),
             color = Color.Red,
             modifier = Modifier.padding(top = 8.dp)

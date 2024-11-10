@@ -28,36 +28,42 @@ class LoginViewModel(
     var verificationId: String = ""
     var isLoggedIn: Boolean = false
 
-    fun requestOtp(phoneNumber: String, activity: Activity) {
-        val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-            override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-                viewModelScope.launch {
-                    signInWithCredential(credential)
+    suspend fun requestOtp(phoneNumber: String, activity: Activity): Boolean {
+        return suspendCancellableCoroutine { continuation ->
+            val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+                override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+                    viewModelScope.launch {
+                        signInWithCredential(credential)
+                        continuation.resume(true)
+                    }
+                }
+
+                override fun onVerificationFailed(e: FirebaseException) {
+                    _state.value = _state.value.copy(errorMessage = e.message)
+                    Log.e("LoginViewModel", "OTP request failed: ${e.message}")
+                    continuation.resume(false)
+                }
+
+                override fun onCodeSent(
+                    verificationId: String,
+                    token: PhoneAuthProvider.ForceResendingToken
+                ) {
+                    this@LoginViewModel.verificationId = verificationId
+                    continuation.resume(true)
+                    Log.d("LoginViewModel", "OTP sent successfully.")
                 }
             }
 
-            override fun onVerificationFailed(e: FirebaseException) {
-                _state.value = _state.value.copy(errorMessage = e.message)
-                Log.e("LoginViewModel", "OTP request failed: ${e.message}")
-            }
-
-            override fun onCodeSent(
-                verificationId: String,
-                token: PhoneAuthProvider.ForceResendingToken
-            ) {
-                this@LoginViewModel.verificationId = verificationId
-                Log.d("LoginViewModel", "OTP sent successfully.")
-            }
+            PhoneAuthProvider.verifyPhoneNumber(
+                PhoneAuthOptions.newBuilder(auth)
+                    .setPhoneNumber(phoneNumber)
+                    .setTimeout(60L, TimeUnit.SECONDS)
+                    .setActivity(activity)
+                    .setCallbacks(callbacks)
+                    .build()
+            )
         }
 
-        PhoneAuthProvider.verifyPhoneNumber(
-            PhoneAuthOptions.newBuilder(auth)
-                .setPhoneNumber(phoneNumber)
-                .setTimeout(60L, TimeUnit.SECONDS)
-                .setActivity(activity)
-                .setCallbacks(callbacks)
-                .build()
-        )
     }
 
     fun checkUserAuthentication(): Boolean {
@@ -74,6 +80,11 @@ class LoginViewModel(
     suspend fun verifyOtp(otp: String): Boolean {
         if (otp.isEmpty()) {
             _state.value = _state.value.copy(errorMessage = "Código OTP é obrigatório")
+            return false
+        }
+
+        if (verificationId.isEmpty()) {
+            _state.value = _state.value.copy(errorMessage = "Código de verificação não encontrado")
             return false
         }
 
