@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.example.myapitest.R
@@ -23,35 +24,36 @@ fun RequestPermission(
 ) {
     val context = LocalContext.current
     val permissionState = rememberPermissionState(permission)
-
-    when {
-        permissionState.status.isGranted -> {
-            onPermissionGranted()
-        }
-        permissionState.status.shouldShowRationale -> {
-            Toast.makeText(context, rationaleMessage, Toast.LENGTH_LONG).show()
-            permissionState.launchPermissionRequest()
-        }
-        permissionState.status.isPermanentlyDenied() -> {
-            Toast.makeText(
-                context,
-                stringResource(R.string.permission_denied),
-                Toast.LENGTH_LONG
-            ).show()
-
-            // Abrir configurações do app
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", context.packageName, null)
+    LaunchedEffect(permissionState.status) {
+        when {
+            permissionState.status.isGranted -> {
+                onPermissionGranted()
             }
-            context.startActivity(intent)
+//            permissionState.status.shouldShowRationale -> {
+//                Toast.makeText(context, rationaleMessage, Toast.LENGTH_LONG).show()
+//                permissionState.launchPermissionRequest()
+//            }
+//            permissionState.status.isPermanentlyDenied() -> {
+//                Toast.makeText(
+//                    context,
+//                    "",
+//                    Toast.LENGTH_LONG
+//                ).show()
+//
+//                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+//                    data = Uri.fromParts("package", context.packageName, null)
+//                }
+//                context.startActivity(intent)
+//            }
+            else -> {
+                permissionState.launchPermissionRequest()
         }
-        else -> {
-            permissionState.launchPermissionRequest()
+
         }
     }
 }
 
-@OptIn(ExperimentalPermissionsApi::class)
-fun PermissionStatus.isPermanentlyDenied(): Boolean {
-    return this is PermissionStatus.Denied && !this.shouldShowRationale
-}
+//@OptIn(ExperimentalPermissionsApi::class)
+//fun PermissionStatus.isPermanentlyDenied(): Boolean {
+//    return this is PermissionStatus.Denied && !this.shouldShowRationale
+//}
